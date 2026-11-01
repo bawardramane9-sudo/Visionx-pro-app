@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d1c">
+<title>VisionX Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d1c;color:#f4f6ff;font-family:Arial,sans-serif}
+header{padding:24px 18px;background:linear-gradient(135deg,#151e40,#092c47)}
+.logo{font-size:27px;font-weight:800;color:#65e7ff}
+.logo span{color:#a78bfa}
+header p{color:#c5cee5;font-size:14px}
+main{max-width:760px;margin:auto;padding:18px}
+h2{font-size:21px}
+.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:#121a30;border:1px solid #293654;border-radius:14px;padding:16px}
+.card b{display:block;margin-bottom:6px}
+.card small{color:#b6c1d9}
+.panel{margin-top:20px;background:#121a30;border:1px solid #293654;border-radius:16px;padding:18px}
+label{display:block;margin:15px 0 7px;color:#dce4fa;font-size:14px}
+input,select,button{width:100%;padding:12px;border-radius:9px;border:1px solid #354363;background:#0b1224;color:white;font-size:15px}
+input[type=range]{padding:0}
+button{background:#6558ed;border:0;font-weight:bold;margin-top:15px;cursor:pointer}
+button:disabled{opacity:.5}
+#preview{max-width:100%;max-height:300px;display:block;margin:15px auto;border-radius:10px}
+#status{font-size:14px;color:#83e6c0;overflow-wrap:anywhere}
+footer{text-align:center;padding:25px;color:#8491ad;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">VisionX <span>Pro</span></div>
+ <p>Ton studio multimédia, directement sur ton téléphone.</p>
+</header>
+<main>
+ <h2>Bienvenue dans ton studio ✨</h2>
+ <p style="color:#aebbd5">Des outils simples pour tes fichiers, au même endroit.</p>
+ <div class="tools">
+  <div class="card"><b>🖼️ Images</b><small>Redimensionner et convertir</small></div>
+  <div class="card"><b>📄 Documents</b><small>Espace réservé aux outils PDF</small></div>
+  <div class="card"><b>🎬 Vidéos</b><small>Outils vidéo à venir</small></div>
+  <div class="card"><b>🎵 Audio</b><small>Outils audio à venir</small></div>
+ </div>
+ <section class="panel">
+  <h2>🖼️ Outil image</h2>
+  <label for="file">1. Choisis une image</label>
+  <input id="file" type="file" accept="image/*">
+  <img id="preview" alt="Aperçu de l’image" hidden>
+  <label for="width">2. Largeur souhaitée (pixels)</label>
+  <input id="width" type="number" min="1" max="10000" value="800">
+  <label for="format">3. Format de sortie</label>
+  <select id="format">
+   <option value="image/jpeg">JPG</option>
+   <option value="image/png">PNG</option>
+   <option value="image/webp">WEBP</option>
+  </select>
+  <label for="quality">4. Qualité : <span id="qvalue">80%</span></label>
+  <input id="quality" type="range" min="10" max="100" value="80">
+  <button id="convert" disabled>Convertir et télécharger</button>
+  <p id="status">Choisis une image pour commencer.</p>
+ </section>
+ <section class="panel">
+  <h2>💎 VisionX Pro Premium</h2>
+  <p>Une version gratuite pour commencer. Les fonctions Premium seront ajoutées lorsque les outils et le système de paiement seront prêts.</p>
+  <p><b>Tarif envisagé :</b> 1 500 FCFA/mois ou 15 000 FCFA/an.</p>
+  <small style="color:#aebbd5">Les abonnements ne sont pas encore activés.</small>
+ </section>
+</main>
+<footer>VisionX Pro · Première version · © 2026</footer>
+<script>
+const file=document.getElementById('file');
+const preview=document.getElementById('preview');
+const width=document.getElementById('width');
+const format=document.getElementById('format');
+const quality=document.getElementById('quality');
+const qvalue=document.getElementById('qvalue');
+const convert=document.getElementById('convert');
+const status=document.getElementById('status');
+let image=new Image(), sourceUrl='';
+quality.addEventListener('input',()=>qvalue.textContent=quality.value+'%');
+file.addEventListener('change',()=>{
+ const f=file.files[0];
+ if(!f)return;
+ if(!f.type.startsWith('image/')){
+  status.textContent='Choisis un fichier image valide.';
+  return;
+ }
+ if(sourceUrl)URL.revokeObjectURL(sourceUrl);
+ sourceUrl=URL.createObjectURL(f);
+ image.onload=()=>{
+  preview.src=sourceUrl;
+  preview.hidden=false;
+  width.value=image.naturalWidth;
+  convert.disabled=false;
+  status.textContent='Image prête : '+image.naturalWidth+' × '+image.naturalHeight+' pixels.';
+ };
+ image.onerror=()=>status.textContent='Impossible d’ouvrir cette image.';
+ image.src=sourceUrl;
+});
+convert.addEventListener('click',()=>{
+ if(!image.src)return;
+ const w=Number(width.value);
+ if(!Number.isInteger(w)||w<1||w>10000){
+  status.textContent='Entre une largeur comprise entre 1 et 10 000 pixels.';
+  return;
+ }
+ const h=Math.max(1,Math.round(w*image.naturalHeight/image.naturalWidth));
+ const canvas=document.createElement('canvas');
+ canvas.width=w;canvas.height=h;
+ const ctx=canvas.getContext('2d');
+ if(format.value==='image/jpeg'){
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h);
+ }
+ ctx.drawImage(image,0,0,w,h);
+ canvas.toBlob(blob=>{
+  if(!blob){status.textContent='La conversion a échoué.';return;}
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const ext=format.value.split('/')[1];
+  a.href=url;a.download='visionx-pro.'+ext;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  status.textContent='Terminé ! Image téléchargée : '+w+' × '+h+' pixels.';
+ },format.value,Number(quality.value)/100);
+});
+</script>
+</body>
+</html>
